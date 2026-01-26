@@ -1,6 +1,9 @@
 services:
   clawdbot-gateway:
-    image: ${CLAWDBOT_IMAGE:-clawdbot:local}
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: clawdbot:local
     environment:
       HOME: /home/node
       TERM: xterm-256color
@@ -9,8 +12,8 @@ services:
       CLAUDE_WEB_SESSION_KEY: ${CLAUDE_WEB_SESSION_KEY}
       CLAUDE_WEB_COOKIE: ${CLAUDE_WEB_COOKIE}
     volumes:
-      - ${CLAWDBOT_CONFIG_DIR}:/home/node/.clawdbot
-      - ${CLAWDBOT_WORKSPACE_DIR}:/home/node/clawd
+      - clawdbot-config:/home/node/.clawdbot
+      - clawdbot-workspace:/home/node/clawd
     ports:
       - "${CLAWDBOT_GATEWAY_PORT:-18789}:18789"
       - "${CLAWDBOT_BRIDGE_PORT:-18790}:18790"
@@ -28,7 +31,10 @@ services:
       ]
 
   clawdbot-cli:
-    image: ${CLAWDBOT_IMAGE:-clawdbot:local}
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: clawdbot:local
     environment:
       HOME: /home/node
       TERM: xterm-256color
@@ -37,9 +43,13 @@ services:
       CLAUDE_WEB_SESSION_KEY: ${CLAUDE_WEB_SESSION_KEY}
       CLAUDE_WEB_COOKIE: ${CLAUDE_WEB_COOKIE}
     volumes:
-      - ${CLAWDBOT_CONFIG_DIR}:/home/node/.clawdbot
-      - ${CLAWDBOT_WORKSPACE_DIR}:/home/node/clawd
+      - clawdbot-config:/home/node/.clawdbot
+      - clawdbot-workspace:/home/node/clawd
     stdin_open: true
     tty: true
     init: true
     entrypoint: ["node", "dist/index.js"]
+
+volumes:
+  clawdbot-config:
+  clawdbot-workspace:

@@ -1,0 +1,100 @@
+name: Sync Upstream
+
+on:
+  schedule:
+    # Run daily at 6 AM UTC
+    - cron: '0 6 * * *'
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure Git
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+
+      - name: Add upstream remote
+        run: git remote add upstream https://github.com/clawdbot/clawdbot.git || true
+
+      - name: Fetch upstream
+        run: git fetch upstream
+
+      - name: Merge upstream changes
+        run: |
+          git checkout main
+          git merge upstream/main --no-edit --allow-unrelated-histories || true
+
+      - name: Restore our docker-compose.yml customizations
+        run: |
+          # Keep our build context modifications
+          cat > docker-compose.yml << 'EOF'
+          services:
+            clawdbot-gateway:
+              build:
+                context: .
+                dockerfile: Dockerfile
+              image: clawdbot:local
+              environment:
+                HOME: /home/node
+                TERM: xterm-256color
+                CLAWDBOT_GATEWAY_TOKEN: ${CLAWDBOT_GATEWAY_TOKEN}
+                CLAUDE_AI_SESSION_KEY: ${CLAUDE_AI_SESSION_KEY}
+                CLAUDE_WEB_SESSION_KEY: ${CLAUDE_WEB_SESSION_KEY}
+                CLAUDE_WEB_COOKIE: ${CLAUDE_WEB_COOKIE}
+              volumes:
+                - clawdbot-config:/home/node/.clawdbot
+                - clawdbot-workspace:/home/node/clawd
+              ports:
+                - "${CLAWDBOT_GATEWAY_PORT:-18789}:18789"
+                - "${CLAWDBOT_BRIDGE_PORT:-18790}:18790"
+              init: true
+              restart: unless-stopped
+              command:
+                [
+                  "node",
+                  "dist/index.js",
+                  "gateway",
+                  "--bind",
+                  "${CLAWDBOT_GATEWAY_BIND:-lan}",
+                  "--port",
+                  "${CLAWDBOT_GATEWAY_PORT:-18789}"
+                ]
+
+            clawdbot-cli:
+              build:
+                context: .
+                dockerfile: Dockerfile
+              image: clawdbot:local
+              environment:
+                HOME: /home/node
+                TERM: xterm-256color
+                BROWSER: echo
+                CLAUDE_AI_SESSION_KEY: ${CLAUDE_AI_SESSION_KEY}
+                CLAUDE_WEB_SESSION_KEY: ${CLAUDE_WEB_SESSION_KEY}
+                CLAUDE_WEB_COOKIE: ${CLAUDE_WEB_COOKIE}
+              volumes:
+                - clawdbot-config:/home/node/.clawdbot
+                - clawdbot-workspace:/home/node/clawd
+              stdin_open: true
+              tty: true
+              init: true
+              entrypoint: ["node", "dist/index.js"]
+
+          volumes:
+            clawdbot-config:
+            clawdbot-workspace:
+          EOF
+
+      - name: Commit and push
+        run: |
+          git add -A
+          git diff --staged --quiet || git commit -m "chore: sync upstream and preserve customizations"
+          git push origin main
