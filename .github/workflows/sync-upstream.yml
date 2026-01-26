@@ -34,14 +34,13 @@ jobs:
 
       - name: Restore our docker-compose.yml customizations
         run: |
-          # Keep our build context modifications
+          # Keep our build context modifications (no image: line to avoid pull attempts)
           cat > docker-compose.yml << 'EOF'
           services:
             clawdbot-gateway:
               build:
                 context: .
                 dockerfile: Dockerfile
-              image: clawdbot:local
               environment:
                 HOME: /home/node
                 TERM: xterm-256color
@@ -72,7 +71,6 @@ jobs:
               build:
                 context: .
                 dockerfile: Dockerfile
-              image: clawdbot:local
               environment:
                 HOME: /home/node
                 TERM: xterm-256color
