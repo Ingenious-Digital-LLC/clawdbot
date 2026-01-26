@@ -26,7 +26,8 @@ services:
         "--bind",
         "${CLAWDBOT_GATEWAY_BIND:-lan}",
         "--port",
-        "${CLAWDBOT_GATEWAY_PORT:-18789}"
+        "${CLAWDBOT_GATEWAY_PORT:-18789}",
+        "--allow-unconfigured"
       ]
 
   clawdbot-cli:
