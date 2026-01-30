@@ -1,10 +1,10 @@
-import type { LocationMessageEventContent } from "matrix-bot-sdk";
+import type { LocationMessageEventContent } from "@vector-im/matrix-bot-sdk";
 
 import {
   formatLocationText,
   toLocationContext,
   type NormalizedLocation,
-} from "clawdbot/plugin-sdk";
+} from "openclaw/plugin-sdk";
 import { EventType } from "./types.js";
 
 export type MatrixLocationPayload = {

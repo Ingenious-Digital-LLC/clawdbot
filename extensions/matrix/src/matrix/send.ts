@@ -1,6 +1,6 @@
-import type { MatrixClient } from "matrix-bot-sdk";
+import type { MatrixClient } from "@vector-im/matrix-bot-sdk";
 
-import type { PollInput } from "clawdbot/plugin-sdk";
+import type { PollInput } from "openclaw/plugin-sdk";
 import { getMatrixRuntime } from "../runtime.js";
 import { buildPollStartContent, M_POLL_START } from "./poll-types.js";
 import { resolveMatrixClient, resolveMediaMaxBytes } from "./send/client.js";
@@ -72,7 +72,7 @@ export async function sendMessageMatrix(
       ? buildThreadRelation(threadId, opts.replyToId)
       : buildReplyRelation(opts.replyToId);
     const sendContent = async (content: MatrixOutboundContent) => {
-      // matrix-bot-sdk uses sendMessage differently
+      // @vector-im/matrix-bot-sdk uses sendMessage differently
       const eventId = await client.sendMessage(roomId, content);
       return eventId;
     };
@@ -172,7 +172,7 @@ export async function sendPollMatrix(
     const pollPayload = threadId
       ? { ...pollContent, "m.relates_to": buildThreadRelation(threadId) }
       : pollContent;
-    // matrix-bot-sdk sendEvent returns eventId string directly
+    // @vector-im/matrix-bot-sdk sendEvent returns eventId string directly
     const eventId = await client.sendEvent(roomId, M_POLL_START, pollPayload);
 
     return {

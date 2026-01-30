@@ -1,13 +1,15 @@
 import { type RunOptions, run } from "@grammyjs/runner";
-import type { ClawdbotConfig } from "../config/config.js";
+import type { OpenClawConfig } from "../config/config.js";
 import { loadConfig } from "../config/config.js";
 import { resolveAgentMaxConcurrent } from "../config/agent-limits.js";
 import { computeBackoff, sleepWithAbort } from "../infra/backoff.js";
+import { formatErrorMessage } from "../infra/errors.js";
 import { formatDurationMs } from "../infra/format-duration.js";
 import type { RuntimeEnv } from "../runtime.js";
 import { resolveTelegramAccount } from "./accounts.js";
 import { resolveTelegramAllowedUpdates } from "./allowed-updates.js";
 import { createTelegramBot } from "./bot.js";
+import { isRecoverableTelegramNetworkError } from "./network-errors.js";
 import { makeProxyFetch } from "./proxy.js";
 import { readTelegramUpdateOffset, writeTelegramUpdateOffset } from "./update-offset-store.js";
 import { startTelegramWebhook } from "./webhook.js";
@@ -15,7 +17,7 @@ import { startTelegramWebhook } from "./webhook.js";
 export type MonitorTelegramOpts = {
   token?: string;
   accountId?: string;
-  config?: ClawdbotConfig;
+  config?: OpenClawConfig;
   runtime?: RuntimeEnv;
   abortSignal?: AbortSignal;
   useWebhook?: boolean;
@@ -26,7 +28,7 @@ export type MonitorTelegramOpts = {
   webhookUrl?: string;
 };
 
-export function createTelegramRunnerOptions(cfg: ClawdbotConfig): RunOptions<unknown> {
+export function createTelegramRunnerOptions(cfg: OpenClawConfig): RunOptions<unknown> {
   return {
     sink: {
       concurrency: resolveAgentMaxConcurrent(cfg),
@@ -40,6 +42,9 @@ export function createTelegramRunnerOptions(cfg: ClawdbotConfig): RunOptions<unk
       },
       // Suppress grammY getUpdates stack traces; we log concise errors ourselves.
       silent: true,
+      // Retry transient failures for a limited window before surfacing errors.
+      maxRetryTime: 5 * 60 * 1000,
+      retryInterval: "exponential",
     },
   };
 }
@@ -67,6 +72,23 @@ const isGetUpdatesConflict = (err: unknown) => {
     .join(" ")
     .toLowerCase();
   return haystack.includes("getupdates");
+};
+
+const NETWORK_ERROR_SNIPPETS = [
+  "fetch failed",
+  "network",
+  "timeout",
+  "socket",
+  "econnreset",
+  "econnrefused",
+  "undici",
+];
+
+const isNetworkRelatedError = (err: unknown) => {
+  if (!err) return false;
+  const message = formatErrorMessage(err).toLowerCase();
+  if (!message) return false;
+  return NETWORK_ERROR_SNIPPETS.some((snippet) => message.includes(snippet));
 };
 
 export async function monitorTelegramProvider(opts: MonitorTelegramOpts = {}) {
@@ -133,7 +155,6 @@ export async function monitorTelegramProvider(opts: MonitorTelegramOpts = {}) {
   }
 
   // Use grammyjs/runner for concurrent update processing
-  const log = opts.runtime?.log ?? console.log;
   let restartAttempts = 0;
 
   while (!opts.abortSignal?.aborted) {
@@ -152,12 +173,19 @@ export async function monitorTelegramProvider(opts: MonitorTelegramOpts = {}) {
       if (opts.abortSignal?.aborted) {
         throw err;
       }
-      if (!isGetUpdatesConflict(err)) {
+      const isConflict = isGetUpdatesConflict(err);
+      const isRecoverable = isRecoverableTelegramNetworkError(err, { context: "polling" });
+      const isNetworkError = isNetworkRelatedError(err);
+      if (!isConflict && !isRecoverable && !isNetworkError) {
         throw err;
       }
       restartAttempts += 1;
       const delayMs = computeBackoff(TELEGRAM_POLL_RESTART_POLICY, restartAttempts);
-      log(`Telegram getUpdates conflict; retrying in ${formatDurationMs(delayMs)}.`);
+      const reason = isConflict ? "getUpdates conflict" : "network error";
+      const errMsg = formatErrorMessage(err);
+      (opts.runtime?.error ?? console.error)(
+        `Telegram ${reason}: ${errMsg}; retrying in ${formatDurationMs(delayMs)}.`,
+      );
       try {
         await sleepWithAbort(delayMs, opts.abortSignal);
       } catch (sleepErr) {

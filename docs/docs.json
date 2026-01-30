@@ -1,6 +1,6 @@
 {
   "$schema": "https://mintlify.com/docs.json",
-  "name": "Clawdbot",
+  "name": "OpenClaw",
   "theme": "mint",
   "logo": {
     "light": "/assets/pixel-lobster.svg",
@@ -13,11 +13,11 @@
   "topbarLinks": [
     {
       "name": "GitHub",
-      "url": "https://github.com/clawdbot/clawdbot"
+      "url": "https://github.com/openclaw/openclaw"
     },
     {
       "name": "Releases",
-      "url": "https://github.com/clawdbot/clawdbot/releases"
+      "url": "https://github.com/openclaw/openclaw/releases"
     }
   ],
   "redirects": [
@@ -70,6 +70,14 @@
       "destination": "/providers/minimax"
     },
     {
+      "source": "/xiaomi",
+      "destination": "/providers/xiaomi"
+    },
+    {
+      "source": "/xiaomi/",
+      "destination": "/providers/xiaomi"
+    },
+    {
       "source": "/openai",
       "destination": "/providers/openai"
     },
@@ -116,6 +124,14 @@
     {
       "source": "/mattermost/",
       "destination": "/channels/mattermost"
+    },
+    {
+      "source": "/line",
+      "destination": "/channels/line"
+    },
+    {
+      "source": "/line/",
+      "destination": "/channels/line"
     },
     {
       "source": "/glm",
@@ -196,6 +212,14 @@
     {
       "source": "/providers/msteams/",
       "destination": "/channels/msteams"
+    },
+    {
+      "source": "/providers/line",
+      "destination": "/channels/line"
+    },
+    {
+      "source": "/providers/line/",
+      "destination": "/channels/line"
     },
     {
       "source": "/providers/signal",
@@ -330,16 +354,20 @@
       "destination": "/automation/auth-monitoring"
     },
     {
-      "source": "/scripts",
-      "destination": "/scripts"
-    },
-    {
       "source": "/camera",
       "destination": "/nodes/camera"
     },
     {
       "source": "/clawd",
-      "destination": "/start/clawd"
+      "destination": "/start/openclaw"
+    },
+    {
+      "source": "/start/clawd",
+      "destination": "/start/openclaw"
+    },
+    {
+      "source": "/start/clawd/",
+      "destination": "/start/openclaw"
     },
     {
       "source": "/clawdhub",
@@ -788,6 +816,18 @@
     {
       "source": "/install/railway/",
       "destination": "/railway"
+    },
+    {
+      "source": "/install/northflank/",
+      "destination": "/northflank"
+    },
+    {
+      "source": "/gcp",
+      "destination": "/platforms/gcp"
+    },
+    {
+      "source": "/gcp/",
+      "destination": "/platforms/gcp"
     }
   ],
   "navigation": {
@@ -800,7 +840,7 @@
           "start/wizard",
           "start/setup",
           "start/pairing",
-          "start/clawd",
+          "start/openclaw",
           "start/showcase",
           "start/hubs",
           "start/onboarding",
@@ -828,6 +868,7 @@
           "install/docker",
           "railway",
           "render",
+          "northflank",
           "install/bun"
         ]
       },
@@ -931,6 +972,7 @@
           "gateway/doctor",
           "gateway/logging",
           "gateway/security",
+          "security/formal-verification",
           "gateway/sandbox-vs-tool-policy-vs-elevated",
           "gateway/sandboxing",
           "gateway/troubleshooting",
@@ -966,6 +1008,7 @@
           "channels/signal",
           "channels/imessage",
           "channels/msteams",
+          "channels/line",
           "channels/matrix",
           "channels/zalo",
           "channels/zalouser",
@@ -1057,6 +1100,7 @@
           "platforms/linux",
           "platforms/fly",
           "platforms/hetzner",
+          "platforms/gcp",
           "platforms/exe-dev"
         ]
       },

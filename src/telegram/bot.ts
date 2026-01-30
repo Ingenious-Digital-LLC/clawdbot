@@ -12,7 +12,7 @@ import {
   resolveNativeCommandsEnabled,
   resolveNativeSkillsEnabled,
 } from "../config/commands.js";
-import type { ClawdbotConfig, ReplyToMode } from "../config/config.js";
+import type { OpenClawConfig, ReplyToMode } from "../config/config.js";
 import { loadConfig } from "../config/config.js";
 import {
   resolveChannelGroupPolicy,
@@ -21,8 +21,10 @@ import {
 import { loadSessionStore, resolveStorePath } from "../config/sessions.js";
 import { danger, logVerbose, shouldLogVerbose } from "../globals.js";
 import { createSubsystemLogger } from "../logging/subsystem.js";
+import { formatUncaughtError } from "../infra/errors.js";
 import { enqueueSystemEvent } from "../infra/system-events.js";
 import { getChildLogger } from "../logging.js";
+import { withTelegramApiErrorLogging } from "./api-logging.js";
 import { resolveAgentRoute } from "../routing/resolve-route.js";
 import { resolveThreadSessionKeys } from "../routing/session-key.js";
 import type { RuntimeEnv } from "../runtime.js";
@@ -55,7 +57,7 @@ export type TelegramBotOptions = {
   mediaMaxMb?: number;
   replyToMode?: ReplyToMode;
   proxyFetch?: typeof fetch;
-  config?: ClawdbotConfig;
+  config?: OpenClawConfig;
   updateOffset?: {
     lastUpdateId?: number | null;
     onUpdateId?: (updateId: number) => void | Promise<void>;
@@ -92,11 +94,12 @@ export function getTelegramSequentialKey(ctx: {
     if (typeof chatId === "number") return `telegram:${chatId}:control`;
     return "telegram:control";
   }
+  const isGroup = msg?.chat?.type === "group" || msg?.chat?.type === "supergroup";
+  const messageThreadId = msg?.message_thread_id;
   const isForum = (msg?.chat as { is_forum?: boolean } | undefined)?.is_forum;
-  const threadId = resolveTelegramForumThreadId({
-    isForum,
-    messageThreadId: msg?.message_thread_id,
-  });
+  const threadId = isGroup
+    ? resolveTelegramForumThreadId({ isForum, messageThreadId })
+    : messageThreadId;
   if (typeof chatId === "number") {
     return threadId != null ? `telegram:${chatId}:topic:${threadId}` : `telegram:${chatId}`;
   }
@@ -118,7 +121,9 @@ export function createTelegramBot(opts: TelegramBotOptions) {
   });
   const telegramCfg = account.config;
 
-  const fetchImpl = resolveTelegramFetch(opts.proxyFetch);
+  const fetchImpl = resolveTelegramFetch(opts.proxyFetch, {
+    network: telegramCfg.network,
+  });
   const shouldProvideFetch = Boolean(fetchImpl);
   const timeoutSeconds =
     typeof telegramCfg?.timeoutSeconds === "number" && Number.isFinite(telegramCfg.timeoutSeconds)
@@ -137,6 +142,15 @@ export function createTelegramBot(opts: TelegramBotOptions) {
   const bot = new Bot(opts.token, client ? { client } : undefined);
   bot.api.config.use(apiThrottler());
   bot.use(sequentialize(getTelegramSequentialKey));
+  bot.catch((err) => {
+    runtime.error?.(danger(`telegram bot error: ${formatUncaughtError(err)}`));
+  });
+
+  // Catch all errors from bot middleware to prevent unhandled rejections
+  bot.catch((err) => {
+    const message = err instanceof Error ? err.message : String(err);
+    runtime.error?.(danger(`telegram bot error: ${message}`));
+  });
 
   const recentUpdates = createTelegramUpdateDedupe();
   let lastUpdateId =
@@ -249,7 +263,11 @@ export function createTelegramBot(opts: TelegramBotOptions) {
     }
     if (typeof botHasTopicsEnabled === "boolean") return botHasTopicsEnabled;
     try {
-      const me = (await bot.api.getMe()) as { has_topics_enabled?: boolean };
+      const me = (await withTelegramApiErrorLogging({
+        operation: "getMe",
+        runtime,
+        fn: () => bot.api.getMe(),
+      })) as { has_topics_enabled?: boolean };
       botHasTopicsEnabled = Boolean(me?.has_topics_enabled);
     } catch (err) {
       logVerbose(`telegram getMe failed: ${String(err)}`);
@@ -410,7 +428,8 @@ export function createTelegramBot(opts: TelegramBotOptions) {
         peer: { kind: isGroup ? "group" : "dm", id: peerId },
       });
       const baseSessionKey = route.sessionKey;
-      const dmThreadId = !isGroup ? resolvedThreadId : undefined;
+      // DMs: use raw messageThreadId for thread sessions (not resolvedThreadId which is for forums)
+      const dmThreadId = !isGroup ? messageThreadId : undefined;
       const threadKeys =
         dmThreadId != null
           ? resolveThreadSessionKeys({ baseSessionKey, threadId: String(dmThreadId) })

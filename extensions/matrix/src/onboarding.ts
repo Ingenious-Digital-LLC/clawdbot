@@ -5,7 +5,7 @@ import {
   type ChannelOnboardingAdapter,
   type ChannelOnboardingDmPolicy,
   type WizardPrompter,
-} from "clawdbot/plugin-sdk";
+} from "openclaw/plugin-sdk";
 import { listMatrixDirectoryGroupsLive } from "./directory-live.js";
 import { listMatrixDirectoryPeersLive } from "./directory-live.js";
 import { resolveMatrixAccount } from "./matrix/accounts.js";
@@ -185,7 +185,7 @@ export const matrixOnboardingAdapter: ChannelOnboardingAdapter = {
         `Matrix: ${configured ? "configured" : "needs homeserver + access token or password"}`,
       ],
       selectionHint: !sdkReady
-        ? "install matrix-bot-sdk"
+        ? "install @vector-im/matrix-bot-sdk"
         : configured
           ? "configured"
           : "needs auth",
@@ -318,7 +318,7 @@ export const matrixOnboardingAdapter: ChannelOnboardingAdapter = {
     const deviceName = String(
       await prompter.text({
         message: "Matrix device name (optional)",
-        initialValue: existing.deviceName ?? "Clawdbot Gateway",
+        initialValue: existing.deviceName ?? "OpenClaw Gateway",
       }),
     ).trim();
 

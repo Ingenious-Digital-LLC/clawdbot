@@ -1,4 +1,4 @@
-import type { ClawdbotConfig } from "../config/config.js";
+import type { OpenClawConfig } from "../config/config.js";
 import { resolveGatewayPort } from "../config/config.js";
 import { findTailscaleBinary } from "../infra/tailscale.js";
 import type { RuntimeEnv } from "../runtime.js";
@@ -7,13 +7,13 @@ import { buildGatewayAuthConfig } from "./configure.gateway-auth.js";
 import { confirm, select, text } from "./configure.shared.js";
 import { guardCancel, randomToken } from "./onboard-helpers.js";
 
-type GatewayAuthChoice = "off" | "token" | "password";
+type GatewayAuthChoice = "token" | "password";
 
 export async function promptGatewayConfig(
-  cfg: ClawdbotConfig,
+  cfg: OpenClawConfig,
   runtime: RuntimeEnv,
 ): Promise<{
-  config: ClawdbotConfig;
+  config: OpenClawConfig;
   port: number;
   token?: string;
 }> {
@@ -91,11 +91,6 @@ export async function promptGatewayConfig(
     await select({
       message: "Gateway auth",
       options: [
-        {
-          value: "off",
-          label: "Off (loopback only)",
-          hint: "Not recommended unless you fully trust local processes",
-        },
         { value: "token", label: "Token", hint: "Recommended default" },
         { value: "password", label: "Password" },
       ],
@@ -144,7 +139,7 @@ export async function promptGatewayConfig(
   let tailscaleResetOnExit = false;
   if (tailscaleMode !== "off") {
     note(
-      ["Docs:", "https://docs.clawd.bot/gateway/tailscale", "https://docs.clawd.bot/web"].join(
+      ["Docs:", "https://docs.openclaw.ai/gateway/tailscale", "https://docs.openclaw.ai/web"].join(
         "\n",
       ),
       "Tailscale",
@@ -163,11 +158,6 @@ export async function promptGatewayConfig(
   if (tailscaleMode !== "off" && bind !== "loopback") {
     note("Tailscale requires bind=loopback. Adjusting bind to loopback.", "Note");
     bind = "loopback";
-  }
-
-  if (authMode === "off" && bind !== "loopback") {
-    note("Non-loopback bind requires auth. Switching to token auth.", "Note");
-    authMode = "token";
   }
 
   if (tailscaleMode === "funnel" && authMode !== "password") {

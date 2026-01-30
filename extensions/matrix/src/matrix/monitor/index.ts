@@ -4,7 +4,7 @@ import {
   mergeAllowlist,
   summarizeMapping,
   type RuntimeEnv,
-} from "clawdbot/plugin-sdk";
+} from "openclaw/plugin-sdk";
 import type { CoreConfig, ReplyToMode } from "../../types.js";
 import { setActiveMatrixClient } from "../active-client.js";
 import {
@@ -244,7 +244,7 @@ export async function monitorMatrixProvider(opts: MonitorMatrixOpts = {}): Promi
   });
   logVerboseMessage("matrix: client started");
 
-  // matrix-bot-sdk client is already started via resolveSharedMatrixClient
+  // @vector-im/matrix-bot-sdk client is already started via resolveSharedMatrixClient
   logger.info(`matrix: logged in as ${auth.userId}`);
 
   // If E2EE is enabled, trigger device verification

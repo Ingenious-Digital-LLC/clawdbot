@@ -1,4 +1,4 @@
-import type { MatrixClient } from "matrix-bot-sdk";
+import type { MatrixClient } from "@vector-im/matrix-bot-sdk";
 
 import { getMatrixRuntime } from "../../runtime.js";
 import { getActiveMatrixClient } from "../active-client.js";
@@ -34,7 +34,7 @@ export async function resolveMatrixClient(opts: {
   if (opts.client) return { client: opts.client, stopOnDone: false };
   const active = getActiveMatrixClient();
   if (active) return { client: active, stopOnDone: false };
-  const shouldShareClient = Boolean(process.env.CLAWDBOT_GATEWAY_PORT);
+  const shouldShareClient = Boolean(process.env.OPENCLAW_GATEWAY_PORT);
   if (shouldShareClient) {
     const client = await resolveSharedMatrixClient({
       timeoutMs: opts.timeoutMs,
@@ -57,7 +57,7 @@ export async function resolveMatrixClient(opts: {
       // Ignore crypto prep failures for one-off sends; normal sync will retry.
     }
   }
-  // matrix-bot-sdk uses start() instead of startClient()
+  // @vector-im/matrix-bot-sdk uses start() instead of startClient()
   await client.start();
   return { client, stopOnDone: true };
 }
