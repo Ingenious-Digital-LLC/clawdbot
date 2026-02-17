@@ -1,0 +1,2 @@
+# PolyClaw - Python dependencies for skill scripts
+httpx>=0.27.0

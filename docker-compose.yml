@@ -44,3 +44,17 @@ services:
     tty: true
     init: true
     entrypoint: ["node", "dist/index.js"]
+
+  # PolyClaw Python runner — executes skill scripts (scanner, simulator, etc.)
+  polyclaw-scripts:
+    build:
+      context: .
+      dockerfile: Dockerfile.scripts
+    container_name: polyclaw-scripts
+    volumes:
+      - ./skills:/app/skills
+      - ./data:/app/data
+    env_file:
+      - .env
+    command: ["sleep", "infinity"]
+    restart: unless-stopped
