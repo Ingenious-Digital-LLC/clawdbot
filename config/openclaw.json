@@ -11,6 +11,11 @@
     "enabled": true
   },
   "gateway": {
-    "mode": "local"
+    "mode": "local",
+    "bind": "lan",
+    "trustedProxies": ["10.0.0.0/8", "172.16.0.0/12"],
+    "controlUi": {
+      "enabled": true
+    }
   }
 }

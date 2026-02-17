@@ -31,10 +31,12 @@ RUN pnpm ui:build
 
 ENV NODE_ENV=production
 
-# Install Python3 + deps for poly-* skill scripts (httpx for API calls)
-# Must run BEFORE switching to non-root user
-RUN pip3 install --break-system-packages "httpx>=0.27.0" 2>/dev/null || \
-    pip3 install "httpx>=0.27.0" 2>/dev/null || true
+# Install Python3 + pip + httpx for poly-* skill scripts
+# node:22-bookworm has python3 but not pip — install it first
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends python3-pip && \
+    pip3 install --break-system-packages "httpx>=0.27.0" && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Allow non-root user to write temp files during runtime/tests.
 RUN chown -R node:node /app
