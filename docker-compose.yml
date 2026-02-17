@@ -46,6 +46,8 @@ services:
     entrypoint: ["node", "dist/index.js"]
 
   # PolyClaw Python runner — executes skill scripts (scanner, simulator, etc.)
+  # OPTIONAL: Python now runs inside openclaw-gateway container via pip install in Dockerfile
+  # This service can be used for isolated long-running Python processes if needed
   polyclaw-scripts:
     build:
       context: .

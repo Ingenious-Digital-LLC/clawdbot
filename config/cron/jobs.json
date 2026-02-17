@@ -1,0 +1,69 @@
+{
+  "version": 1,
+  "jobs": [
+    {
+      "id": "poly-research-cycle",
+      "name": "Deep Research Cycle",
+      "enabled": true,
+      "createdAtMs": 1739750400000,
+      "updatedAtMs": 1739750400000,
+      "schedule": { "kind": "cron", "expr": "*/30 * * * *", "tz": "UTC" },
+      "sessionTarget": "isolated",
+      "wakeMode": "next-heartbeat",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Run the research cycle: first scan markets with `python3 skills/poly-scanner/scripts/scan_markets.py --mode quick`, then analyze the top 3 unresearched opportunities with `python3 skills/poly-research/scripts/research.py --from-scanner --top 3`. For any opportunity with edge score >= 50, execute a paper trade via poly-simulator. Log all findings."
+      },
+      "state": {}
+    },
+    {
+      "id": "poly-learning-cycle",
+      "name": "Daily Learning Cycle",
+      "enabled": true,
+      "createdAtMs": 1739750400000,
+      "updatedAtMs": 1739750400000,
+      "schedule": { "kind": "cron", "expr": "0 0 * * *", "tz": "UTC" },
+      "sessionTarget": "isolated",
+      "wakeMode": "next-heartbeat",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Run the daily learning cycle: 1) Check market resolutions and score predictions with `python3 skills/poly-simulator/scripts/learning.py`. 2) Evolve strategy parameters with `python3 skills/poly-simulator/scripts/simulator.py --evolve`. 3) Check graduation progress with `python3 skills/poly-simulator/scripts/simulator.py --graduation-check`. Log all parameter changes and weight updates."
+      },
+      "state": {}
+    },
+    {
+      "id": "poly-daily-pnl",
+      "name": "Daily P&L Report",
+      "enabled": true,
+      "createdAtMs": 1739750400000,
+      "updatedAtMs": 1739750400000,
+      "schedule": { "kind": "cron", "expr": "55 23 * * *", "tz": "UTC" },
+      "sessionTarget": "isolated",
+      "wakeMode": "next-heartbeat",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Generate today's trading summary for Telegram delivery. Run `python3 skills/poly-simulator/scripts/simulator.py --status` and format the results as a daily report: bankroll and % change, positions opened/closed today, current win rate and Sharpe ratio, any notable events (stop losses hit, large moves, whale activity). Keep it scannable with emoji headers.",
+        "deliver": true,
+        "channel": "telegram"
+      },
+      "state": {}
+    },
+    {
+      "id": "poly-weekly-review",
+      "name": "Weekly Performance Review",
+      "enabled": true,
+      "createdAtMs": 1739750400000,
+      "updatedAtMs": 1739750400000,
+      "schedule": { "kind": "cron", "expr": "0 12 * * 0", "tz": "UTC" },
+      "sessionTarget": "isolated",
+      "wakeMode": "next-heartbeat",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Weekly performance review for Telegram delivery. Analyze the past 7 days: 1) Run `python3 skills/poly-simulator/scripts/simulator.py --status` for current metrics. 2) Run `python3 skills/poly-simulator/scripts/simulator.py --evolution-log` for strategy changes. 3) Run `python3 skills/poly-simulator/scripts/simulator.py --graduation-check` for progress. Summarize: weekly P&L, best/worst trades, strategy parameter evolution, agent weight changes, graduation progress percentage, and suggested focus areas for next week.",
+        "deliver": true,
+        "channel": "telegram"
+      },
+      "state": {}
+    }
+  ]
+}

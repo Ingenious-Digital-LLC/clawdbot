@@ -31,6 +31,11 @@ RUN pnpm ui:build
 
 ENV NODE_ENV=production
 
+# Install Python3 + deps for poly-* skill scripts (httpx for API calls)
+# Must run BEFORE switching to non-root user
+RUN pip3 install --break-system-packages "httpx>=0.27.0" 2>/dev/null || \
+    pip3 install "httpx>=0.27.0" 2>/dev/null || true
+
 # Allow non-root user to write temp files during runtime/tests.
 RUN chown -R node:node /app
 
