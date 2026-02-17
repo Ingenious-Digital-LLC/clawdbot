@@ -27,8 +27,8 @@ if [ -d /app/workspace ]; then
   done
 fi
 
-# --- Config: deploy openclaw config if not already customized ---
-if [ -f /app/config/openclaw.json ] && [ ! -f "$OPENCLAW_DIR/config.json" ]; then
+# --- Config: always overwrite to pick up config changes ---
+if [ -f /app/config/openclaw.json ]; then
   cp /app/config/openclaw.json "$OPENCLAW_DIR/config.json" 2>/dev/null || true
 fi
 

@@ -3,31 +3,31 @@
   "jobs": [
     {
       "id": "poly-research-cycle",
-      "name": "Deep Research Cycle",
+      "name": "Research & Trade Cycle",
       "enabled": true,
       "createdAtMs": 1739750400000,
-      "updatedAtMs": 1739750400000,
+      "updatedAtMs": 1739836800000,
       "schedule": { "kind": "cron", "expr": "*/30 * * * *", "tz": "UTC" },
       "sessionTarget": "isolated",
       "wakeMode": "next-heartbeat",
       "payload": {
         "kind": "agentTurn",
-        "message": "Run the research cycle: first scan markets with `python3 skills/poly-scanner/scripts/scan_markets.py --mode quick`, then analyze the top 3 unresearched opportunities with `python3 skills/poly-research/scripts/research.py --from-scanner --top 3`. For any opportunity with edge score >= 50, execute a paper trade via poly-simulator. Log all findings."
+        "message": "Execute the trading pipeline:\n\n1. SCAN: Run `python3 skills/poly-scanner/scripts/scan_markets.py --mode quick` to find opportunities\n2. RESEARCH: Run `python3 skills/poly-research/scripts/research.py --from-scanner --top 3` to analyze top picks\n3. DECIDE: For each opportunity with edge score >= 50 and confidence >= 0.60 and 3+ agents agreeing, execute a paper trade via `python3 skills/poly-simulator/scripts/simulator.py --start --strategy edge_hunter`\n4. WHALE CHECK: Run `python3 skills/poly-whale/scripts/whale_monitor.py --threshold 10000` for smart money signals\n\nReport findings concisely. If no tradeable opportunities found, say so in one line."
       },
       "state": {}
     },
     {
       "id": "poly-learning-cycle",
-      "name": "Daily Learning Cycle",
+      "name": "Daily Learning & Evolution",
       "enabled": true,
       "createdAtMs": 1739750400000,
-      "updatedAtMs": 1739750400000,
+      "updatedAtMs": 1739836800000,
       "schedule": { "kind": "cron", "expr": "0 0 * * *", "tz": "UTC" },
       "sessionTarget": "isolated",
       "wakeMode": "next-heartbeat",
       "payload": {
         "kind": "agentTurn",
-        "message": "Run the daily learning cycle: 1) Check market resolutions and score predictions with `python3 skills/poly-simulator/scripts/learning.py`. 2) Evolve strategy parameters with `python3 skills/poly-simulator/scripts/simulator.py --evolve`. 3) Check graduation progress with `python3 skills/poly-simulator/scripts/simulator.py --graduation-check`. Log all parameter changes and weight updates."
+        "message": "Daily learning cycle:\n\n1. Score resolved markets: `python3 skills/poly-simulator/scripts/learning.py`\n2. Evolve strategy parameters: `python3 skills/poly-simulator/scripts/simulator.py --evolve`\n3. Check graduation: `python3 skills/poly-simulator/scripts/simulator.py --graduation-check`\n4. Show agent weights: `python3 skills/poly-research/scripts/research.py --show-weights`\n\nLog all parameter changes. If Sharpe < 0.5, note that auto-revert to defaults was triggered."
       },
       "state": {}
     },
@@ -36,13 +36,13 @@
       "name": "Daily P&L Report",
       "enabled": true,
       "createdAtMs": 1739750400000,
-      "updatedAtMs": 1739750400000,
+      "updatedAtMs": 1739836800000,
       "schedule": { "kind": "cron", "expr": "55 23 * * *", "tz": "UTC" },
       "sessionTarget": "isolated",
       "wakeMode": "next-heartbeat",
       "payload": {
         "kind": "agentTurn",
-        "message": "Generate today's trading summary for Telegram delivery. Run `python3 skills/poly-simulator/scripts/simulator.py --status` and format the results as a daily report: bankroll and % change, positions opened/closed today, current win rate and Sharpe ratio, any notable events (stop losses hit, large moves, whale activity). Keep it scannable with emoji headers.",
+        "message": "Generate daily trading report for Telegram.\n\nRun `python3 skills/poly-simulator/scripts/simulator.py --status` and format as:\n\n📊 DAILY REPORT [date]\n💰 Bankroll: $X (±Y%)\n📈 Trades today: X opened, Y closed\n🏆 Win rate: X% | Sharpe: X.XX\n🎯 Best trade: [market] +$X\n💀 Worst trade: [market] -$X\n🐋 Whale activity: [summary or 'None']\n🎓 Graduation: X% ready\n\nKeep it under 500 characters. Numbers only, no fluff.",
         "deliver": true,
         "channel": "telegram"
       },
@@ -53,13 +53,13 @@
       "name": "Weekly Performance Review",
       "enabled": true,
       "createdAtMs": 1739750400000,
-      "updatedAtMs": 1739750400000,
+      "updatedAtMs": 1739836800000,
       "schedule": { "kind": "cron", "expr": "0 12 * * 0", "tz": "UTC" },
       "sessionTarget": "isolated",
       "wakeMode": "next-heartbeat",
       "payload": {
         "kind": "agentTurn",
-        "message": "Weekly performance review for Telegram delivery. Analyze the past 7 days: 1) Run `python3 skills/poly-simulator/scripts/simulator.py --status` for current metrics. 2) Run `python3 skills/poly-simulator/scripts/simulator.py --evolution-log` for strategy changes. 3) Run `python3 skills/poly-simulator/scripts/simulator.py --graduation-check` for progress. Summarize: weekly P&L, best/worst trades, strategy parameter evolution, agent weight changes, graduation progress percentage, and suggested focus areas for next week.",
+        "message": "Weekly performance review for Telegram.\n\n1. Run `python3 skills/poly-simulator/scripts/simulator.py --status`\n2. Run `python3 skills/poly-simulator/scripts/simulator.py --evolution-log`\n3. Run `python3 skills/poly-simulator/scripts/simulator.py --graduation-check`\n4. Run `python3 skills/poly-research/scripts/research.py --show-weights`\n\nFormat as:\n\n📊 WEEKLY REVIEW [week]\n💰 P&L this week: +$X (+Y%)\n📈 Trades: X total | W wins | L losses\n🏆 Win rate: X% | Sharpe: X.XX | Max DD: X%\n🧠 Agent rankings: 1. Oracle (0.28) 2. Sentinel (0.22) ...\n🔄 Strategy changes: [parameter shifts or 'None']\n🎓 Graduation: X% (need: Y more trades, Z more days)\n📋 Focus next week: [1-2 insights from data]\n\nKeep under 800 characters.",
         "deliver": true,
         "channel": "telegram"
       },
