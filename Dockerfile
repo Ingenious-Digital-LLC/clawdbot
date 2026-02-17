@@ -54,4 +54,4 @@ COPY --chown=node:node entrypoint.sh /app/entrypoint.sh
 #   1. Set OPENCLAW_GATEWAY_TOKEN or OPENCLAW_GATEWAY_PASSWORD env var
 #   2. Override CMD: ["node","dist/index.js","gateway","--allow-unconfigured","--bind","lan"]
 ENTRYPOINT ["/app/entrypoint.sh"]
-CMD ["dist/index.js", "gateway", "--allow-unconfigured"]
+CMD ["dist/index.js", "gateway", "--allow-unconfigured", "--bind", "lan"]
